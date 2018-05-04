@@ -11,7 +11,7 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from torch.autograd import Variable
-from utils.voc_datasets import VOC2007
+from utils.voc_datasets import VOC2007_TEST
 from models.DarkNet import DarkNet
 import torch.nn.init as init
 import torch.nn.functional as F
@@ -26,6 +26,7 @@ parser.add_argument('--lr', type=float, default=1e-4, help='learning rate, defau
 parser.add_argument('--lr_decay', type=float, help='learning rate decay', default=0.1)
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 parser.add_argument('--outf', default='checkpoints/', help='folder to output images and model checkpoints')
+parser.add_argument('--imgdir', default='/media/data2/wb/VOCdevkit/VOC2007/JPEGImages/', help='folder to output images and model checkpoints')
 
 opt = parser.parse_args()
 print(opt)
@@ -37,6 +38,7 @@ try:
 except OSError:
     pass
 
+imgdir = opt.imgdir
 lr_decay_epoch = {10, 12}
 lr_decay = opt.lr_decay
 mean=[0.485, 0.456, 0.406]
@@ -66,10 +68,10 @@ transform = transforms.Compose([
             ])
 
 ###########   DATASET   ###########
-data = VOC2007(transform=transform, size=416)
+data = VOC2007_TEST(transform=transform, size=416)
 train_loader = torch.utils.data.DataLoader(dataset=data,
                                            batch_size=1,
-                                           shuffle=True,
+                                           shuffle=False,
                                            num_workers=2)
 
 net = DarkNet(anchors, num_classes)
@@ -98,6 +100,7 @@ for i, image in enumerate(train_loader):
     img = image[0]
     gt_boxes = image[1]
     gt_classes = image[2]
+    name = image[3][0] + '.jpg'
 
     img = Variable(img, volatile=True).cuda()
     gt_boxes = Variable(gt_boxes).cuda()
@@ -107,10 +110,19 @@ for i, image in enumerate(train_loader):
 
     prediction = write_results(detections, confidence, num_classes, nms = True, nms_conf = nms_thesh)
     print (prediction)
-    im = img.data[0].cpu()
 
-    im = topilimage(im)
-    drawObject = ImageDraw.Draw(im)
+    # resize to the original img
+    # ori_im = topilimage(img.data[0].cpu())
+    ori_im = Image.open(imgdir + name).convert('RGB')
+    W, H = ori_im.size
+
+    scale_H = float(H) / img.size(2)
+    scale_W = float(W) / img.size(3)
+
+    drawObject = ImageDraw.Draw(ori_im)
+
+    prediction[:,1:5:2] = prediction[:,1:5:2] * scale_W
+    prediction[:,2:5:2] = prediction[:,2:5:2] * scale_H
     bboxes = prediction[:,1:5].clamp(min=0.0, max=415.0)
     for l in range(len(bboxes)):
 
@@ -118,7 +130,7 @@ for i, image in enumerate(train_loader):
         print (bbox)
     
         drawObject.rectangle(bbox, outline='red')
-    im.show()
+    ori_im.show()
 
     exit()
 
