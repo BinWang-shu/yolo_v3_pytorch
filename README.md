@@ -10,6 +10,11 @@ The loss was converging in the training.
 Bacause I create the net in myself without the offical cfg, I do not design the code to copy the weights from pre_trained model.<br>
 If you want to use the pre_trained model to detect, you can find some implemments from other authors in github.
 
+## Requirements
+1. python 2.7
+2. numpy
+3. pytorch 0.3.0
+
 ## TODO
 * finsih the evalution of the VOC
 * achieve the results as the offical results.
