@@ -5,7 +5,7 @@ This is the simple implement of the yolov3[https://pjreddie.com/media/files/pape
 [https://github.com/ayooshkathuria/pytorch-yolo-v3.git] and [https://github.com/longcw/yolo2-pytorch.git] is referred.
 
 I have finish the train and test of the implement but I can not ensure the accuracy.<br>
-The loss convergence in the training.
+The loss was converging in the training.
 
 Bacause I create the net in myself without the offical cfg, I do not design the code to copy the weights from pre_trained model.<br>
 If you want to use the pre_trained model to detect, you can find some implemments from other authors in github.
