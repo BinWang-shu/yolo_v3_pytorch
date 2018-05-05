@@ -126,7 +126,7 @@ class VOC2007_TEST(data.Dataset):
         name = self.image_index[index]
 
         ## resize the img and boxes
-        w, h = origin_img.size
+        h, w = origin_img.size
         boxes = np.asarray(boxes, dtype=np.float)
 
         img = origin_img.resize((self.imgsize, self.imgsize), Image.ANTIALIAS)
