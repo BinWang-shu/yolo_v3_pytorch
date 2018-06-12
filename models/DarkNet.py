@@ -147,7 +147,10 @@ class DarkNet(nn.Module):
 
 		_, detection_52 = self.convs_52(torch.cat((route_26_up, feature3), 1))
 
+		device_cpu = torch.device('cpu')
+
 		if self.training:
+			
 			## reshape the out (N,C,H,W) ==> (N,H*W,3,num_anchors+5)
 			detection_13_reshape = \
 				detection_13.permute(0, 2, 3, 1).contiguous().view(bsize,
@@ -170,8 +173,8 @@ class DarkNet(nn.Module):
 			iou_pred_13 = F.sigmoid(detection_13_reshape[:,:,:,4:5]) # b,h*w,a,1
 			classes_pred_13 = F.sigmoid(detection_13_reshape[:,:,:,5:]) # b,h*w,a,20
 
-			bbox_pred_13_tensor = bbox_pred_13.data.cpu()
-			iou_pred_13_tensor = iou_pred_13.data.cpu()
+			bbox_pred_13_tensor = bbox_pred_13.to(device_cpu)
+			iou_pred_13_tensor = iou_pred_13.to(device_cpu)
 
 			inp_size = [H, W]
 			out_size = [h, w]
@@ -183,16 +186,19 @@ class DarkNet(nn.Module):
 									self.class_scale, self.coord_scale)
 
 			## to Variable
-			boxes_13 = Variable(_boxes_13).cuda() # b, hw, a, 4
-			ious_13 = Variable(_ious_13).cuda() # b, hw, a, 1
-			classes_13 = Variable(_classes_13).cuda() # b, hw, a, 20
-			box_mask_13 = Variable(_box_mask_13).cuda() # b, hw, a, 1
-			iou_mask_13 = Variable(_iou_mask_13.sqrt()).cuda() # b, hw, a, 1
-			class_mask_13 = Variable(_class_mask_13).cuda() # b, hw, a, 1
+			boxes_13 = _boxes_13.to(x.device) # b, hw, a, 4
+			ious_13 = _ious_13.to(x.device) # b, hw, a, 1
+			classes_13 = _classes_13.to(x.device) # b, hw, a, 20
+			box_mask_13 = _box_mask_13.to(x.device) # b, hw, a, 1
+			iou_mask_13 = _iou_mask_13.to(x.device) # b, hw, a, 1
+			class_mask_13 = _class_mask_13.to(x.device) # b, hw, a, 1
+			# print (ious_13)
+			# print (iou_mask_13)
+			# exit()
 
 			# compute loss
 			box_mask_13 = box_mask_13.expand_as(_boxes_13)
-			bbox_loss_13 = 5.0 * F.mse_loss(bbox_pred_13 * box_mask_13, 
+			bbox_loss_13 = F.mse_loss(bbox_pred_13 * box_mask_13, 
 					boxes_13 * box_mask_13, size_average=False)
 			iou_loss_13 = F.mse_loss(iou_pred_13 * iou_mask_13, 
 					ious_13 * iou_mask_13, size_average=False)
@@ -212,8 +218,8 @@ class DarkNet(nn.Module):
 			iou_pred_26 = F.sigmoid(detection_26_reshape[:,:,:,4:5]) # b,h*w,a,1
 			classes_pred_26 = F.sigmoid(detection_26_reshape[:,:,:,5:]) # b,h*w,a,20
 
-			bbox_pred_26_tensor = bbox_pred_26.data.cpu()
-			iou_pred_26_tensor = iou_pred_26.data.cpu()
+			bbox_pred_26_tensor = bbox_pred_26.to(device_cpu)
+			iou_pred_26_tensor = iou_pred_26.to(device_cpu)
 
 			inp_size = [H, W]
 			out_size = [h, w]
@@ -225,16 +231,16 @@ class DarkNet(nn.Module):
 									self.class_scale, self.coord_scale)
 
 			## to Variable
-			boxes_26 = Variable(_boxes_26).cuda() # b, hw, a, 4
-			ious_26 = Variable(_ious_26).cuda() # b, hw, a, 1
-			classes_26 = Variable(_classes_26).cuda() # b, hw, a, 20
-			box_mask_26 = Variable(_box_mask_26).cuda() # b, hw, a, 1
-			iou_mask_26 = Variable(_iou_mask_26.sqrt()).cuda() # b, hw, a, 1
-			class_mask_26 = Variable(_class_mask_26).cuda() # b, hw, a, 1
+			boxes_26 = _boxes_26.to(x.device) # b, hw, a, 4
+			ious_26 = _ious_26.to(x.device) # b, hw, a, 1
+			classes_26 = _classes_26.to(x.device) # b, hw, a, 20
+			box_mask_26 = _box_mask_26.to(x.device) # b, hw, a, 1
+			iou_mask_26 = _iou_mask_26.to(x.device) # b, hw, a, 1
+			class_mask_26 = _class_mask_26.to(x.device) # b, hw, a, 1
 
 			# compute loss
 			box_mask_26 = box_mask_26.expand_as(_boxes_26)
-			bbox_loss_26 = 5.0 * F.mse_loss(bbox_pred_26 * box_mask_26, 
+			bbox_loss_26 = F.mse_loss(bbox_pred_26 * box_mask_26, 
 					boxes_26 * box_mask_26, size_average=False)
 			iou_loss_26 = F.mse_loss(iou_pred_26 * iou_mask_26, 
 					ious_26 * iou_mask_26, size_average=False)
@@ -254,8 +260,8 @@ class DarkNet(nn.Module):
 			iou_pred_52 = F.sigmoid(detection_52_reshape[:,:,:,4:5]) # b,h*w,a,1
 			classes_pred_52 = F.sigmoid(detection_52_reshape[:,:,:,5:]) # b,h*w,a,20
 
-			bbox_pred_52_tensor = bbox_pred_52.data.cpu()
-			iou_pred_52_tensor = iou_pred_52.data.cpu()
+			bbox_pred_52_tensor = bbox_pred_52.to(device_cpu)
+			iou_pred_52_tensor = iou_pred_52.to(device_cpu)
 
 			inp_size = [H, W]
 			out_size = [h, w]
@@ -267,16 +273,16 @@ class DarkNet(nn.Module):
 									self.class_scale, self.coord_scale)
 
 			## to Variable
-			boxes_52 = Variable(_boxes_52).cuda() # b, hw, a, 4
-			ious_52 = Variable(_ious_52).cuda() # b, hw, a, 1
-			classes_52 = Variable(_classes_52).cuda() # b, hw, a, 20
-			box_mask_52 = Variable(_box_mask_52).cuda() # b, hw, a, 1
-			iou_mask_52 = Variable(_iou_mask_52.sqrt()).cuda() # b, hw, a, 1
-			class_mask_52 = Variable(_class_mask_52).cuda() # b, hw, a, 1
+			boxes_52 = _boxes_52.to(x.device) # b, hw, a, 4
+			ious_52 = _ious_52.to(x.device) # b, hw, a, 1
+			classes_52 = _classes_52.to(x.device) # b, hw, a, 20
+			box_mask_52 = _box_mask_52.to(x.device) # b, hw, a, 1
+			iou_mask_52 = _iou_mask_52.to(x.device) # b, hw, a, 1
+			class_mask_52 = _class_mask_52.to(x.device) # b, hw, a, 1
 
 			# compute loss
 			box_mask_52 = box_mask_52.expand_as(_boxes_52)
-			bbox_loss_52 = 5.0 * F.mse_loss(bbox_pred_52 * box_mask_52, 
+			bbox_loss_52 = F.mse_loss(bbox_pred_52 * box_mask_52, 
 					boxes_52 * box_mask_52, size_average=False)
 			iou_loss_52 = F.mse_loss(iou_pred_52 * iou_mask_52, 
 					ious_52 * iou_mask_52, size_average=False)
@@ -285,15 +291,15 @@ class DarkNet(nn.Module):
 			cls_loss_52 = F.mse_loss(classes_pred_52 * class_mask_52, 
 					classes_52 * class_mask_52, size_average=False)
 
-			# print ('bbox_loss_13:', bbox_loss_13.data[0])
-			# print ('iou_loss_13:', iou_loss_13.data[0])
-			# print ('cls_loss_13:', cls_loss_13.data[0])
-			# print ('bbox_loss_26:', bbox_loss_26.data[0])
-			# print ('iou_loss_26:', iou_loss_26.data[0])
-			# print ('cls_loss_26:', cls_loss_26.data[0])
-			# print ('bbox_loss_52:', bbox_loss_52.data[0])
-			# print ('iou_loss_52:', iou_loss_52.data[0])
-			# print ('cls_loss_52:', cls_loss_52.data[0])
+			# print ('bbox_loss_13:', bbox_loss_13.item())
+			# print ('iou_loss_13:', iou_loss_13.item())
+			# print ('cls_loss_13:', cls_loss_13.item())
+			# print ('bbox_loss_26:', bbox_loss_26.item())
+			# print ('iou_loss_26:', iou_loss_26.item())
+			# print ('cls_loss_26:', cls_loss_26.item())
+			# print ('bbox_loss_52:', bbox_loss_52.item())
+			# print ('iou_loss_52:', iou_loss_52.item())
+			# print ('cls_loss_52:', cls_loss_52.item())
 			loss_13 = bbox_loss_13 + iou_loss_13 + cls_loss_13
 			loss_26 = bbox_loss_26 + iou_loss_26 + cls_loss_26
 			loss_52 = bbox_loss_52 + iou_loss_52 + cls_loss_52
@@ -302,9 +308,9 @@ class DarkNet(nn.Module):
 
 
 		else:
-			detection_13_trans = predict_transform(detection_13.data.cpu(), H, self.anchors3, self.num_classes)
-			detection_26_trans = predict_transform(detection_26.data.cpu(), H, self.anchors2, self.num_classes)
-			detection_52_trans = predict_transform(detection_52.data.cpu(), H, self.anchors1, self.num_classes)
+			detection_13_trans = predict_transform(detection_13.to(device_cpu), H, self.anchors3, self.num_classes)
+			detection_26_trans = predict_transform(detection_26.to(device_cpu), H, self.anchors2, self.num_classes)
+			detection_52_trans = predict_transform(detection_52.to(device_cpu), H, self.anchors1, self.num_classes)
 
 			detections = torch.cat((detection_13_trans, detection_26_trans, detection_52_trans), 1)
 

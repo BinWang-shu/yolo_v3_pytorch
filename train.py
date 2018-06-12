@@ -19,7 +19,7 @@ import torch.nn.functional as F
 
 parser = argparse.ArgumentParser(description='train hed model')
 parser.add_argument('--batchSize', type=int, default=1, help='with batchSize=1 equivalent to instance normalization.')
-parser.add_argument('--niter', type=int, default=40, help='number of epochs to train for')
+parser.add_argument('--niter', type=int, default=300, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate, default=0.0002')
 parser.add_argument('--lr_decay', type=float, help='learning rate decay', default=0.1)
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
@@ -28,14 +28,14 @@ parser.add_argument('--outf', default='checkpoints/', help='folder to output ima
 opt = parser.parse_args()
 print(opt)
 
-torch.cuda.set_device(2)
+device = torch.device('cuda: 0')
 
 try:
     os.makedirs(opt.outf)
 except OSError:
     pass
 
-lr_decay_epoch = {20， 30}
+lr_decay_epoch = {100, 200}
 lr_decay = opt.lr_decay
 mean=[0.485, 0.456, 0.406]
 std=[0.229, 0.224, 0.225]
@@ -70,14 +70,15 @@ net = DarkNet(anchors, 20)
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
-        init.xavier_uniform(m.weight.data)
-        init.constant(m.bias.data, 0)
+        init.xavier_uniform_(m.weight.data)
+        init.constant_(m.bias.data, 0)
     elif isinstance(m, nn.BatchNorm2d):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
 net.apply(weights_init)
-net.cuda()
+net.load_state_dict(torch.load('checkpoints/darknet_50.pth'))
+net.to(device)
 
 lr = opt.lr
 optimizer = torch.optim.Adam(net.parameters(),lr=lr, betas=(opt.beta1, 0.999))
@@ -93,9 +94,9 @@ for epoch in range(1,opt.niter+1):
         gt_classes = image[2]
         # print ('gt_boxes:', gt_boxes[0])
         # print ('gt_classes:', gt_classes[0])
-        img = Variable(img, requires_grad=True).cuda()
-        gt_boxes = Variable(gt_boxes, requires_grad=True).cuda()
-        gt_classes = Variable(gt_classes, requires_grad=True).cuda()
+        img = img.to(device)
+        gt_boxes = gt_boxes.to(device)
+        gt_classes = gt_classes.to(device)
         # print ('boxes', gt_boxes)
         # print ('classes', gt_classes)
         loss_13, loss_26, loss_52 = net(img, gt_boxes, gt_classes)
@@ -121,5 +122,5 @@ for epoch in range(1,opt.niter+1):
     if epoch in lr_decay_epoch:
                 lr *= lr_decay
                 optimizer = torch.optim.Adam(net.parameters(),lr=lr, betas=(opt.beta1, 0.999))
-
-    torch.save(net.state_dict(), '%s/darknet_%d.pth' % (opt.outf, epoch))
+    if(epoch % 10 == 0):
+        torch.save(net.state_dict(), '%s/darknet_%d.pth' % (opt.outf, epoch))

@@ -31,7 +31,7 @@ parser.add_argument('--imgdir', default='/media/data2/wb/VOCdevkit/VOC2007/JPEGI
 opt = parser.parse_args()
 print(opt)
 
-torch.cuda.set_device(2)
+device = torch.device('cuda: 0')
 
 try:
     os.makedirs(opt.outf)
@@ -57,7 +57,7 @@ anchors = [anchors1, anchors2, anchors3]
 
 print (anchors)
 
-confidence = 0.5
+confidence = 0.6
 num_classes = 20
 nms_thesh = 0.4
 
@@ -71,23 +71,23 @@ transform = transforms.Compose([
 data = VOC2007_TEST(transform=transform, size=416)
 train_loader = torch.utils.data.DataLoader(dataset=data,
                                            batch_size=1,
-                                           shuffle=False,
+                                           shuffle=True,
                                            num_workers=2)
 
 net = DarkNet(anchors, num_classes)
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
-        init.xavier_uniform(m.weight.data)
-        init.constant(m.bias.data, 0)
+        init.xavier_uniform_(m.weight.data)
+        init.constant_(m.bias.data, 0)
     elif isinstance(m, nn.BatchNorm2d):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
 net.apply(weights_init)
 
-net.load_state_dict(torch.load('checkpoints/darknet_14.pth'))
-net.cuda()
+net.load_state_dict(torch.load('checkpoints/darknet_200.pth'))
+net.to(device)
 
 lr = opt.lr
 optimizer = torch.optim.Adam(net.parameters(),lr=lr, betas=(opt.beta1, 0.999))
@@ -102,14 +102,15 @@ for i, image in enumerate(train_loader):
     gt_classes = image[2]
     name = image[3][0] + '.jpg'
 
-    img = Variable(img, volatile=True).cuda()
-    gt_boxes = Variable(gt_boxes).cuda()
-    gt_classes = Variable(gt_classes).cuda()
+    img = img.to(device)
+    gt_boxes = gt_boxes.to(device)
+    gt_classes = gt_classes.to(device)
 
     detections = net(img, 0, 0)
+    # print (detections[:,:,:5])
 
     prediction = write_results(detections, confidence, num_classes, nms = True, nms_conf = nms_thesh)
-    print (prediction)
+    print (prediction[:,1:5])
 
     # resize to the original img
     # ori_im = topilimage(img.data[0].cpu())
@@ -118,16 +119,16 @@ for i, image in enumerate(train_loader):
 
     scale_H = float(H) / img.size(2)
     scale_W = float(W) / img.size(3)
-
     drawObject = ImageDraw.Draw(ori_im)
-
-    prediction[:,1:5:2] = prediction[:,1:5:2] * scale_W
-    prediction[:,2:5:2] = prediction[:,2:5:2] * scale_H
     bboxes = prediction[:,1:5].clamp(min=0.0, max=415.0)
+    print (bboxes)
+    bboxes[:,0:4:2] = bboxes[:,0:4:2] * scale_W
+    bboxes[:,1:4:2] = bboxes[:,1:4:2] * scale_H
+
     for l in range(len(bboxes)):
 
         bbox = list(bboxes[l])
-        print (bbox)
+        # print (bbox)
     
         drawObject.rectangle(bbox, outline='red')
     ori_im.show()

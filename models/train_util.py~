@@ -160,8 +160,8 @@ def build_target(inp_size, out_size, bbox_pred_tensor, gt_boxes,
 
 			_iou_mask[cell_ind, a, :] = object_scale * (1 - iou_pred_b[cell_ind, a, :]) # noqa
 
-			#_ious[cell_ind, a, :] = ious[cell_ind, a, i]
-			_ious[cell_ind, a, :] = 1.0
+			_ious[cell_ind, a, :] = ious[cell_ind, a, i]
+			# _ious[cell_ind, a, :] = 1.0
 
 			_box_mask[cell_ind, a, :] = coord_scale
 			target_boxes[i, 2:4] /= anchors[a]
