@@ -15,6 +15,9 @@ If you want to use the pre_trained model to detect, you can find some implemment
 2. numpy
 3. pytorch 0.3.0
 
+## example
+![](https://github.com/BinWang-shu/yolo_v3_pytorch/raw/master/example.jpg)
+
 ## TODO
 * finsih the evalution of the VOC
 * achieve the results as the offical results.
