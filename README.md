@@ -1,5 +1,5 @@
 # yolo_v3_pytorch
-An simple implement of yolo_v3 on pytorch
+A simple implement of yolo_v3 on pytorch
 
 This is the simple implement of the yolov3[https://pjreddie.com/media/files/papers/YOLOv3.pdf].<br>
 [https://github.com/ayooshkathuria/pytorch-yolo-v3.git] and [https://github.com/longcw/yolo2-pytorch.git] is referred.
